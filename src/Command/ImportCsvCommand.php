@@ -36,16 +36,18 @@ class ImportCsvCommand extends Command
             return Command::FAILURE;
         }
 
+        // Підрахунок кількості рядків
+        $rowCount = $this->getTotalRows($filePath);
+
         $batchSize = 100;
         $processedRows = 0;
 
         $file = new \SplFileObject($filePath);
         $file->setFlags(\SplFileObject::READ_CSV);
         $file->setCsvControl(';', '"');
+        $file->fgetcsv(); // Пропускаємо заголовок
 
-        $file->fgetcsv();
-
-        $progressBar = new ProgressBar($output);
+        $progressBar = new ProgressBar($output, $rowCount);
         $progressBar->start();
 
         $this->connection->beginTransaction();
@@ -100,6 +102,22 @@ class ImportCsvCommand extends Command
         $io->success('All data imported');
 
         return Command::SUCCESS;
+    }
+
+    private function getTotalRows(string $filePath): int
+    {
+        $file = new \SplFileObject($filePath);
+        $file->setFlags(\SplFileObject::READ_CSV);
+        $file->setCsvControl(';', '"');
+
+        $rowCount = 0;
+        $file->fgetcsv();
+
+        while ($file->fgetcsv() !== false) {
+            $rowCount++;
+        }
+
+        return $rowCount;
     }
 
     private function insertBatch(array $values): void

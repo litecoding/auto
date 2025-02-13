@@ -28,14 +28,17 @@ services:
     networks:
       - symfony_network
     environment:
-      JWT_PASSPHRASE: your_secret_pass
+      - JWT_SECRET_KEY=/var/www/symfony/config/jwt/private.pem
+      - JWT_PUBLIC_KEY=/var/www/symfony/config/jwt/public.pem
+      - JWT_PASSPHRASE=d2bd6f8a13f1d9a1477ebbe3e1508db0215f13ad42d9bda7791ab34a364db74b
     command: >
-      bash -c "mkdir -p config/jwt && 
-               if [ ! -f config/jwt/private.pem ]; then 
-                 openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:$JWT_PASSPHRASE && 
-                 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:$JWT_PASSPHRASE; 
-               fi && 
-               php-fpm"
+      bash -c "
+        mkdir -p config/jwt && 
+        if [ ! -f config/jwt/private.pem ]; then 
+          openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:$JWT_PASSPHRASE && 
+          openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:$JWT_PASSPHRASE; 
+        fi && 
+        php-fpm"
 
   nginx:
     image: nginx:latest
